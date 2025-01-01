@@ -1,139 +1,161 @@
 <?php
-    class docgia{
+class Docgia {
     private $conn;
     private $table = "docgia";
 
     public function __construct($db) {
         $this->conn = $db;
     }
-}
-    require('../config/db.php');
-    function readStoryList() {
-        global $conn;
+
+    public function readStoryList() {
         $query = "SELECT * FROM docgia";
-        $query_run = mysqli_query($conn,$query);
-
-        if($query_run) {
-            if(mysqli_num_rows($query_run) >0) {
-
-                $res = mysqli_fetch_all($query_run,MYSQLI_ASSOC);
-                $data = [
-                    'status' => 200,
-                    'message' => 'Story List Fetched Successfully!',
-                    'data' => $res,
-                ];
-                header("HTTP/1.0 200 Success ");
-                return json_encode($data);
-            } 
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if($result->num_rows > 0) {
+            $res = $result->fetch_all(MYSQLI_ASSOC);
+            $data = [
+                'status' => 200,
+                'message' => 'Story List Fetched Successfully!',
+                'data' => $res,
+            ];
+            return json_encode($data);
         } else {
             $data = [
-                'status' => 500,
-                'message' => 'Internal Server Error',
+                'status' => 404,
+                'message' => 'No data found',
             ];
-            header("HTTP/1.0 500 Internal Server Error");
             return json_encode($data);
         }
     }
-    function insertStory($truyenInput) {
-        global $conn;
-        $id = $truyenInput["docgia_id"];
+
+    public function getStoryById($id) {
+        $query = "SELECT * FROM docgia WHERE docgia_id = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if($result->num_rows > 0) {
+            $res = $result->fetch_assoc();
+            $data = [
+                'status' => 200,
+                'message' => 'Story Fetched Successfully!',
+                'data' => $res,
+            ];
+            return json_encode($data);
+        } else {
+            $data = [
+                'status' => 404,
+                'message' => 'No data found',
+            ];
+            return json_encode($data);
+        }
+    }
+
+    public function insertStory($truyenInput) {
         $name = $truyenInput["ten_docgia"];
-        $author = $truyenInput["gioitinh_docgia"];
-        $note = $truyenInput["sdt_docgia"];
-        $hihi= $truyenInput["hinhanh_docgia"];
-
-
-        if ( empty($name) || empty($author) || empty($note)) {
+        $age = $truyenInput["tuoi_docgia"];
+        $gender = $truyenInput["gioitinh_docgia"];
+        $phone = $truyenInput["sdt_docgia"];
+        $image = $truyenInput["hinhanh_docgia"];
+    
+        if (empty($name) || empty($age) || !isset($gender) || empty($phone)) {
             $data = [
                 'status' => 422,
-                'message' => 'Invalid or Missing Input Data',
+                'message' => 'Dữ liệu thiếu hoặc không hợp lệ',
             ];
-            header("HTTP/1.0 422 Unprocessable Entity");
             return json_encode($data);
         }
-        $checksql = "SELECT docgia_id FROM docgia WHERE docgia_id = $id";
-        $checktrungid = mysqli_query($conn, $checksql);
 
-        if (mysqli_num_rows($checktrungid) > 0) {
+        // Kiểm tra giá trị của gioitinh_docgia
+        if ($gender !== "0" && $gender !== "1") {
             $data = [
-                'status' => 409,
-                'message' => 'Conflict',
+                'status' => 422,
+                'message' => 'Dữ liệu giới tính không hợp lệ',
             ];
-            header("HTTP/1.0 409 Conflict");
             return json_encode($data);
         }
-
-        $sql = "INSERT INTO Truyen(docgia_id,ten_docgia,gioitinh_docgia,sdt_docgia,hinhanh_docgia)values ('$id',n'$name',n'$author',n'$note',n'$hihi')";  
-        $result = mysqli_query($conn,$sql);
-
-        if ($result) {
+    
+        $sql = "INSERT INTO docgia (ten_docgia, tuoi_docgia, gioitinh_docgia, sdt_docgia, hinhanh_docgia) 
+                VALUES (?, ?, ?, ?, ?)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("sisss", $name, $age, $gender, $phone, $image);
+    
+        if ($stmt->execute()) {
             $data = [
                 'status' => 201,
-                'message' => 'Create successfully',
+                'message' => 'Thêm thành công',
             ];
-            header("HTTP/1.0 201 Created");
             return json_encode($data);
         } else {
             $data = [
                 'status' => 500,
-                'message' => 'Internal Server Error',
+                'message' => 'Lỗi máy chủ',
             ];
-            header("HTTP/1.0 500 Internal Server Error");
             return json_encode($data);
         }
-
     }
-    function updateStory($truyenupdate){
-        global $conn;
+
+    public function updateStory($truyenupdate) {
         $id = $truyenupdate["docgia_id"];
         $name = $truyenupdate["ten_docgia"];
-        $author = $truyenupdate["gioitinh_docgia"];
-        $note = $truyenupdate["sdt_docgia"];
-        $hihi= $truyenupdate["hinhanh_docgia"];
+        $gender = $truyenupdate["gioitinh_docgia"];
+        $phone = $truyenupdate["sdt_docgia"];
+        $image = $truyenupdate["hinhanh_docgia"];
 
-
-        if (empty($id) || empty($name) || empty($author) || empty($note)) {
+        if (empty($id) || empty($name) || !isset($gender) || empty($phone)) {
             $data = [
                 'status' => 422,
                 'message' => 'Invalid or Missing Input Data',
             ];
-            header("HTTP/1.0 422 Unprocessable Entity");
             return json_encode($data);
         }
-        $checkSql = "SELECT * FROM docgia WHERE docgia_id = $id";
-        $checkid = mysqli_query($conn, $checkSql);
-        if (mysqli_num_rows($checkid) === 0) {
+
+        // Kiểm tra giá trị của gioitinh_docgia
+        if ($gender !== "0" && $gender !== "1") {
+            $data = [
+                'status' => 422,
+                'message' => 'Dữ liệu giới tính không hợp lệ',
+            ];
+            return json_encode($data);
+        }
+
+        $checkSql = "SELECT * FROM docgia WHERE docgia_id = ?";
+        $stmt = $this->conn->prepare($checkSql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $stmt->store_result();
+
+        if ($stmt->num_rows === 0) {
             $data = [
                 'status' => 404,
                 'message' => 'Story Not Found',
             ];
-            header("HTTP/1.0 404 Not Found");
             return json_encode($data);
         }
 
-        $sql = "UPDATE docgia SET ten_docgia = n'$name',  gioitinh_docgia=n'$author',sdt_docgia=n'$note, hinhanh_docgia=n'$hihi' WHERE docgia_id = '$id'";  
-        $result = mysqli_query($conn,$sql);
+        $sql = "UPDATE docgia SET ten_docgia = ?, gioitinh_docgia = ?, sdt_docgia = ?, hinhanh_docgia = ? WHERE docgia_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ssssi", $name, $gender, $phone, $image, $id);
 
-        if ($result) {
+        if ($stmt->execute()) {
             $data = [
-                'status' => 201,
-                'message' => 'Update successfully',
+                'status' => 200,
+                'message' => 'Updated successfully',
             ];
-            header("HTTP/1.0 201 Created");
             return json_encode($data);
         } else {
             $data = [
                 'status' => 500,
                 'message' => 'Internal Server Error',
             ];
-            header("HTTP/1.0 500 Internal Server Error");
             return json_encode($data);
         }
-
     }
-    function deleteStory($truyenInput) {
-        global $conn;
-    
+
+    public function deleteStory($truyenInput) {
         $id = $truyenInput["docgia_id"];
 
         if (empty($id)) {
@@ -141,37 +163,40 @@
                 'status' => 422,
                 'message' => 'Invalid or Missing ID',
             ];
-            header("HTTP/1.0 422 Unprocessable Entity");
             return json_encode($data);
         }
-        $checkSql = "SELECT * FROM docgia WHERE docgia = $id";
-        $checkid = mysqli_query($conn, $checkSql);
-        if (mysqli_num_rows($checkid) === 0) {
+
+        $checkSql = "SELECT * FROM docgia WHERE docgia_id = ?";
+        $stmt = $this->conn->prepare($checkSql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $stmt->store_result();
+
+        if ($stmt->num_rows === 0) {
             $data = [
                 'status' => 404,
                 'message' => 'Story Not Found',
             ];
-            header("HTTP/1.0 404 Not Found");
             return json_encode($data);
         }
-    
-        $sql = "DELETE FROM docgia WHERE docgia_id = $id";
-        $result = mysqli_query($conn, $sql);
-    
-        if ($result) {
+
+        $sql = "DELETE FROM docgia WHERE docgia_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $id);
+
+        if ($stmt->execute()) {
             $data = [
                 'status' => 200,
                 'message' => 'Story Deleted Successfully',
             ];
-            header("HTTP/1.0 200 Success");
             return json_encode($data);
         } else {
             $data = [
                 'status' => 500,
                 'message' => 'Internal Server Error',
             ];
-            header("HTTP/1.0 500 Internal Server Error");
             return json_encode($data);
         }
     }
+}
 ?>
