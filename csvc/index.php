@@ -113,5 +113,82 @@
                 </form>
             
     </div>  
+
+    <script>
+// Hàm load dữ liệu cơ sở vật chất
+function load_csvc() {
+    fetch('http://localhost/QLTV/controller/qlycsvc_controller.php')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const tableBody = document.getElementById('csvc_table');
+            tableBody.innerHTML = ''; // Xóa dữ liệu cũ
+
+            if (!data.data || !Array.isArray(data.data)) {
+                console.error('Dữ liệu trả về không phải là mảng');
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Lỗi dữ liệu</td></tr>';
+                return;
+            }
+
+            if (data.data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Không có dữ liệu</td></tr>';
+            } else {
+                console.log(data);
+                data.data.forEach(csvc => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${csvc.csvc_id}</td>
+                        <td>${csvc.ten_csvc}</td>
+                        <td>${csvc.soluong_csvc}</td>
+                        <td>${csvc.tinhtrang_csvc === '1' ? 'Sẵn sàng' : 'Hỏng'}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" onclick="edit_csvc(${csvc.csvc_id})">Sửa</button>
+                            <button class="btn btn-danger btn-sm" onclick="delete_csvc(${csvc.csvc_id})">Xóa</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Lỗi:', error);
+        });
+}
+// Hàm xử lý khi submit form thêm cơ sở vật chất
+    document.getElementById('addForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Ngừng hành động mặc định (reload trang)
+
+    // Tạo đối tượng FormData để gửi dữ liệu
+    const formData = new FormData();
+    formData.append('ten_csvc', document.getElementById('ten_csvc').value);
+    formData.append('soluong_csvc', document.getElementById('soluong_csvc').value);
+    formData.append('tinhtrang_csvc', document.querySelector('input[name="tinhtrang_csvc"]:checked')?.value);
+
+    // Gửi dữ liệu đến server qua fetch API
+    fetch('http://localhost/QLTV/controller/qlycsvc_controller.php', {
+        method: 'POST',
+        body: formData, // Dữ liệu form
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 201) {
+            $('#addModal').modal('hide');  // Đóng modal sau khi thêm thành công
+            window.location.reload(); // Reload lại trang
+        } else {
+            alert(data.message); // Thông báo lỗi
+        }
+    })
+    .catch(error => {
+        console.error('Lỗi:', error);
+    });
+});
+
+// Gọi hàm load_csvc khi trang được tải
+window.onload = load_csvc;
+</script>
 </body>
 </html>
