@@ -21,8 +21,8 @@
 
         // Kiểm tra nếu id tác giả là rỗng hoặc không tồn tại
         if($id == "" || empty($id)){
-            // Nếu không có id, chuyển hướng về trang read.php và kết thúc
-            header('Location: read.php');
+            // Nếu không có id, chuyển hướng về trang index.php và kết thúc
+            header('Location: index.php');
             exit();
         }
         else{
@@ -38,8 +38,8 @@
                 echo 'Dữ liệu không hợp lệ!';
             }
             else{
-                // Nếu thành công, chuyển hướng về trang read.php
-                header('Location: read.php');           
+                // Nếu thành công, chuyển hướng về trang index.php
+                header('Location: index.php');           
             }
         }
     }

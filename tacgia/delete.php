@@ -9,6 +9,6 @@
         echo" Lỗi xóa ";
     }
     else{
-        header('Location:read.php');
+        header('Location:index.php');
     }
 ?>
