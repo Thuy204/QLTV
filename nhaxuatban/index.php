@@ -1,18 +1,25 @@
 <?php
- include '../view/head.php';
- require_once '../config/db.php';
+include '../view/head.php';
+require_once '../config/db.php';
+
 // Lấy từ khóa tìm kiếm nếu có
 $search_keyword = '';
 if (isset($_POST['search'])) {
   $search_keyword = $_POST['search_keyword'];
 }
 
-// Lấy dữ liệu từ bảng nhaxuatban
+// Lấy dữ liệu từ bảng nhaxuatban sử dụng prepared statements để tránh SQL Injection
 $sql = "SELECT * FROM nhaxuatban";
 if (!empty($search_keyword)) {
-  $sql .= " WHERE ten_nxb LIKE '%$search_keyword%'";
+  $sql .= " WHERE ten_nxb LIKE ?";
+  $stmt = $conn->prepare($sql);
+  $search_keyword = "%" . $search_keyword . "%";
+  $stmt->bind_param("s", $search_keyword);
+  $stmt->execute();
+  $result = $stmt->get_result();
+} else {
+  $result = $conn->query($sql);
 }
-$result = $conn->query($sql);
 ?>
 
 <!DOCTYPE html>
@@ -22,6 +29,7 @@ $result = $conn->query($sql);
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quản lý Nhà Xuất Bản</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
   <style>
     .btn-icon {
       padding: 0.25rem 0.5rem;
@@ -51,7 +59,7 @@ $result = $conn->query($sql);
           <th>ID</th>
           <th>Tên</th>
           <th>Thông tin</th>
-          <!-- <th>Hình ảnh</th> -->
+          <th>Hình ảnh</th> 
           <th>Sửa</th>
           <th>Xóa</th>
         </tr>
@@ -66,19 +74,28 @@ $result = $conn->query($sql);
             echo "<td>" . $row["nxb_id"] . "</td>";
             echo "<td>" . $row["ten_nxb"] . "</td>";
             echo "<td>" . $row["thongtin_nxb"] . "</td>";
-            // echo "<td><img src='../img/nxb/".$row["hinhanh_nxb"]."' alt='img' width='50'></td>";
+
+            // Kiểm tra nếu có hình ảnh, nếu không thì hiển thị hình ảnh mặc định
+            $imagePath = !empty($row["hinhanh_nxb"]) ? "../img/nxb/".$row["hinhanh_nxb"] : '../img/default.png';
+            echo "<td><img src='" . $imagePath . "' alt='img' width='50'></td>";
+            
             echo "<td><a href='edit.php?id=".$row["nxb_id"]."' class='btn btn-success'>Sửa</a></td>";
             echo "<td><a onclick ='return confirm(\"Bạn có chắc chắn muốn xóa không?\");' 
                         href='delete.php?id=".$row['nxb_id']."' class='btn btn-danger'>Xóa</a></td>";
             echo "</tr>";
           }
         } else {
-          echo "<tr><td colspan='6'>Không có nhà xuất bản nào.</td></tr>";
+          echo "<tr><td colspan='7' class='text-center'>Không có nhà xuất bản nào.</td></tr>";
         }
         $conn->close();
         ?>
       </tbody>
     </table>
   </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
 </body>
 </html>
