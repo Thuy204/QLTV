@@ -1,17 +1,17 @@
-<?php require_once '../config/db.php';?>
+<!-- <?php require_once '../config/db.php';?>
 <?php
-        if(isset($_GET['id'])){
-            $id =$_GET['id'];
+        // if(isset($_GET['id'])){
+        //     $id =$_GET['id'];
         
-                $query="SELECT* FROM cosovatchat WHERE csvc_id= '$id'";
+        //         $query="SELECT* FROM cosovatchat WHERE csvc_id= '$id'";
 
-                $result= mysqli_query($conn, $query);
-                if(!$result){
-                    echo "Không có dữ liệu";
-                }else{
-                    $row= mysqli_fetch_assoc($result);   
-                }       
-        }
+        //         $result= mysqli_query($conn, $query);
+        //         if(!$result){
+        //             echo "Không có dữ liệu";
+        //         }else{
+        //             $row= mysqli_fetch_assoc($result);   
+        //         }       
+        // }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -62,21 +62,21 @@
 </html>
 
 <?php    
-        if(isset($_POST['sua_csvc'])){
-            $ten=$_POST['ten_csvc'];
-            $sl=$_POST['sl_csvc'];
-            $tinhtrang=$_POST['tt_csvc'];
-            $query="UPDATE cosovatchat SET ten_csvc = '$ten', soluong_csvc ='$sl', tinhtrang_csvc= '$tinhtrang' WHERE csvc_id= '$id' ";
-            $result= mysqli_query($conn, $query);
-                if(!$result){
-                    echo "Lỗi cập nhật thông tin";
-                }else{
-                    echo "<script type='text/javascript'>
-                        alert('Cập nhật dữ liệu thành công!');
-                        window.location.href='index.php';
-                        </script>";
-                }
-        }
+        // if(isset($_POST['sua_csvc'])){
+        //     $ten=$_POST['ten_csvc'];
+        //     $sl=$_POST['sl_csvc'];
+        //     $tinhtrang=$_POST['tt_csvc'];
+        //     $query="UPDATE cosovatchat SET ten_csvc = '$ten', soluong_csvc ='$sl', tinhtrang_csvc= '$tinhtrang' WHERE csvc_id= '$id' ";
+        //     $result= mysqli_query($conn, $query);
+        //         if(!$result){
+        //             echo "Lỗi cập nhật thông tin";
+        //         }else{
+        //             echo "<script type='text/javascript'>
+        //                 alert('Cập nhật dữ liệu thành công!');
+        //                 window.location.href='index.php';
+        //                 </script>";
+        //         }
+        // }
     ?>
     
-    
+     -->

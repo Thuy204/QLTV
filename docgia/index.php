@@ -139,7 +139,7 @@ function load_docgia() {
             if (data.data.length === 0) {
                 tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Không có dữ liệu</td></tr>';
             } else {
-                console.log(response.json());
+                
                 data.data.forEach(docgia => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
@@ -164,40 +164,38 @@ function load_docgia() {
         });
 }
 
-// Hàm xử lý khi submit form thêm độc giả
+// Hàm xử lý khi submit form thêm cơ sở vật chất
 document.getElementById('addForm').addEventListener('submit', function(event) {
     event.preventDefault(); // Ngừng hành động mặc định (reload trang)
 
     // Tạo đối tượng FormData để gửi dữ liệu
     const formData = new FormData();
-    formData.append('ten_docgia', document.getElementById('ten_docgia').value);
-    formData.append('tuoi_docgia', document.getElementById('tuoi_docgia').value);
+    formData.append('ten_csvc', document.getElementById('ten_csvc').value);
+    formData.append('soluong_csvc', document.getElementById('soluong_csvc').value);
 
-    // Lấy giá trị giới tính từ các radio button
-    const gioitinh = document.querySelector('input[name="gioitinh_docgia"]:checked')?.value;
-    formData.append('gioitinh_docgia', gioitinh); // Kiểm tra giá trị
-
-    formData.append('sdt_docgia', document.getElementById('sdt_docgia').value);
-    formData.append('hinhanh_docgia', document.getElementById('hinhanh_docgia').files[0]);
+    // Lấy giá trị tình trạng từ các radio button
+    const tinhtrang = document.querySelector('input[name="tinhtrang_csvc"]:checked')?.value;
+    formData.append('tinhtrang_csvc', tinhtrang);
 
     // Gửi dữ liệu đến server qua fetch API
-    fetch('http://localhost/QLTV/controller/qlydocgia_controller.php', {
+    fetch('http://localhost/QLTV/controller/qlycsvc_controller.php', {
         method: 'POST',
         body: formData, // Dữ liệu form
     })
     .then(response => response.json())
     .then(data => {
         if (data.status === 201) {
-            $('#addModal').modal('hide');  // Đóng modal sau khi thêm thành công
-            window.location.reload(); // Reload lại trang
+            $('#addModal').modal('hide'); // Đóng modal sau khi thêm thành công
+            load_csvc(); // Hàm để reload danh sách CSVC
         } else {
-            alert(data.message); // Thông báo lỗi
+            alert(data.message); // Thông báo lỗi nếu có
         }
     })
     .catch(error => {
-        console.error('Lỗi:', error);
+        console.error('Lỗi:', error); // Hiển thị lỗi trên console nếu có
     });
 });
+
 // Gọi hàm load_docgia khi trang được tải
 window.onload = load_docgia;
 </script>

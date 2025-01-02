@@ -7,112 +7,141 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-    <title>Quản lý cơ sở vật chất</title>
+    <title>Quản lý độc giả</title>
     <style>
-        .box h2{
-            float:left; 
+        .box h2 {
+            float: left; 
             margin: 10px; 
         }
-        .box form{
+        .box form {
             float: right;
             margin: 10px;
         }
-        
+        .img {
+            width: 5rem;
+            height: 6rem;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
     <?php
         include '../view/head.php';
         include '../config/db.php';
+        include '../model/qlydocgia_model.php';
     ?>
-    <div class="container" >
+    <div class="container">
         <div class="box">
             <h2>DANH SÁCH CƠ SỞ VẬT CHẤT</h2>
-            <form action="search_csvc.php" method="POST">
-            <div class="row"><script type="module"></script>
-                <div class="col">
-                    <input type="text" placeholder="Search" name="tim_csvc">
+            <form action="search_docgia.php" method="POST">
+                <div class="row">
+                    <div class="col">
+                        <input type="text" placeholder="Search" name="tim_docgia" class="form-control">
+                    </div>
+                    <div class="col">
+                        <button class="btn btn-primary" name="timkiem">Tìm kiếm</button>
+                    </div>
                 </div>
-                <div class="col">
-                    <button class="btn btn-primary" name="timkiem">Tìm kiếm</button>
-                </div>
-            </div>
             </form>
+            <button class="btn btn-success mt-3" data-toggle="modal" data-target="#addModal">Thêm mới độc giả</button>
         </div>
-    <table class="table table-striped table-hover">
-        <thead>
-            <th>STT</th>
-            <th>Mã</th>
-            <th>Tên</th>
-            <th>Số lượng</th>
-            <th>Tình trạng</th>
-            <th>Sửa</th>
-            <th>Xóa</th>
-        </thead>
-        <tbody>
-            <?php
-                $query="SELECT* FROM cosovatchat";
-                $result= mysqli_query($conn, $query);
-                $num=1;
-                if(!$result){
-                    echo "Không có dữ liệu ";
-                }else{
-                    while($row= mysqli_fetch_assoc($result)){
-                        echo"
-                        <tr>
-                        <td>".($num++)."</td>
-                        <td>".$row["csvc_id"]."</td>
-                        <td>".$row["ten_csvc"]."</td>
-                        <td>".$row["soluong_csvc"]."</td>
-                        <td>".($row["tinhtrang_csvc"] == 1 ? 'Mới' : 'Cũ')."</td>
-                        <td><a href='edit_csvc.php?id=".$row["csvc_id"]."' class='btn btn-success'>Sửa</a></td>
-                        <td><a onclick ='return confirm(\"Bạn có chắc chắn muốn xóa không?\");' 
-                        href='delete_csvc.php?id=".$row['csvc_id']."' class='btn btn-danger'>Xóa</a></td>
-                        </tr>";
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th>Số Lượng</th>
+                    <th>Tình Trạng</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody id="csvc_table">
+                <!-- Dữ liệu được load từ API -->
+            </tbody>
+        </table>
+    </div>
 
-
-                    }
-                    echo "</tbody>
-                            </table>";
-                }
-            ?>
-            <button class="btn btn-primary" data-toggle="modal" data-target="#exampleModalCenter">Thêm mới</button>
-            <form action="create_csvc.php" method="POST">
-            <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered" role="document">
-                    <div class="modal-content">
+    <!-- Modal Thêm Cơ Sở Vật Chất -->
+    <div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="addForm">
                     <div class="modal-header">
-                        <h4 class="modal-title" id="exampleModalLongTitle">Thêm mới cơ sở vật chất</h4>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                        </button>
+                        <h5 class="modal-title" id="addModalLabel">Thêm Cơ Sở Vật Chất</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        
-                            <div class="form-group">
-                                <label>ID</label>
-                                <input type="number" name="id_csvc" placeholder="Enter ID" class="form-control" required>
-                                <label>Tên CSVC</label>
-                                <input type="text" name="ten_csvc" placeholder="Enter Name" class="form-control" required>
-                                <label>Số Lượng</label>
-                                <input type="number" name="sl_csvc" placeholder="Enter number" class="form-control" required>
-                                <label>Tình Trạng</label>
-                                <div class="radio">
-                                        <label><input type="radio" name="tt_csvc" checked="checked" value="1">Mới</label>
-                                        <label><input type="radio" name="tt_csvc" value="0">Cũ</label>
-                                </div>
+                        <div class="mb-3">
+                            <label for="ten_csvc" class="form-label">Tên Cơ Sở Vật Chất</label>
+                            <input type="text" class="form-control" id="ten_csvc" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="soluong_csvc" class="form-label">Số Lượng</label>
+                            <input type="number" class="form-control" id="soluong_csvc" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tình Trạng</label><br>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tinhtrang_csvc" id="tinhtrang_moi" value="1" required>
+                                <label class="form-check-label" for="tinhtrang_moi">Mới</label>
                             </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tinhtrang_csvc" id="tinhtrang_cu" value="0">
+                                <label class="form-check-label" for="tinhtrang_cu">Cũ</label>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-                        <input type="submit" class="btn btn-success" name="them_csvc" value="Thêm mới">
+                        <button type="submit" class="btn btn-primary">Thêm</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                     </div>
-                    </div>
-                </div>
-                </div>
                 </form>
-            
-    </div>  
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Sửa Cơ Sở Vật Chất -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="editForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editModalLabel">Sửa Cơ Sở Vật Chất</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="edit_csvc_id">
+                        <div class="mb-3">
+                            <label for="edit_ten_csvc" class="form-label">Tên Cơ Sở Vật Chất</label>
+                            <input type="text" class="form-control" id="edit_ten_csvc" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_soluong_csvc" class="form-label">Số Lượng</label>
+                            <input type="number" class="form-control" id="edit_soluong_csvc" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tình Trạng</label><br>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="edit_tinhtrang_csvc" value="1" id="edit_tinhtrang_moi" required>
+                                <label class="form-check-label" for="edit_tinhtrang_moi">Mới</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="edit_tinhtrang_csvc" value="0" id="edit_tinhtrang_cu">
+                                <label class="form-check-label" for="edit_tinhtrang_cu">Cũ</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Lưu</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <script>
 // Hàm load dữ liệu cơ sở vật chất
@@ -128,23 +157,22 @@ function load_csvc() {
             const tableBody = document.getElementById('csvc_table');
             tableBody.innerHTML = ''; // Xóa dữ liệu cũ
 
-            if (!data.data || !Array.isArray(data.data)) {
+            if (!data || !Array.isArray(data)) {
                 console.error('Dữ liệu trả về không phải là mảng');
                 tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Lỗi dữ liệu</td></tr>';
                 return;
             }
 
-            if (data.data.length === 0) {
+            if (data.length === 0) {
                 tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Không có dữ liệu</td></tr>';
             } else {
-                console.log(data);
-                data.data.forEach(csvc => {
+                data.forEach(csvc => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${csvc.csvc_id}</td>
                         <td>${csvc.ten_csvc}</td>
                         <td>${csvc.soluong_csvc}</td>
-                        <td>${csvc.tinhtrang_csvc === '1' ? 'Sẵn sàng' : 'Hỏng'}</td>
+                        <td>${csvc.tinhtrang_csvc === '1' ? 'Mới' : 'Cũ'}</td>
                         <td>
                             <button class="btn btn-warning btn-sm" onclick="edit_csvc(${csvc.csvc_id})">Sửa</button>
                             <button class="btn btn-danger btn-sm" onclick="delete_csvc(${csvc.csvc_id})">Xóa</button>
@@ -158,28 +186,29 @@ function load_csvc() {
             console.error('Lỗi:', error);
         });
 }
+
 // Hàm xử lý khi submit form thêm cơ sở vật chất
-    document.getElementById('addForm').addEventListener('submit', function(event) {
+document.getElementById('addForm').addEventListener('submit', function(event) {
     event.preventDefault(); // Ngừng hành động mặc định (reload trang)
 
-    // Tạo đối tượng FormData để gửi dữ liệu
-    const formData = new FormData();
-    formData.append('ten_csvc', document.getElementById('ten_csvc').value);
-    formData.append('soluong_csvc', document.getElementById('soluong_csvc').value);
-    formData.append('tinhtrang_csvc', document.querySelector('input[name="tinhtrang_csvc"]:checked')?.value);
+    const formData = {
+        ten_csvc: document.getElementById('ten_csvc').value,
+        soluong_csvc: document.getElementById('soluong_csvc').value,
+        tinhtrang_csvc: document.querySelector('input[name="tinhtrang_csvc"]:checked')?.value
+    };
 
-    // Gửi dữ liệu đến server qua fetch API
     fetch('http://localhost/QLTV/controller/qlycsvc_controller.php', {
         method: 'POST',
-        body: formData, // Dữ liệu form
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
     })
     .then(response => response.json())
     .then(data => {
         if (data.status === 201) {
-            $('#addModal').modal('hide');  // Đóng modal sau khi thêm thành công
-            window.location.reload(); // Reload lại trang
+            $('#addModal').modal('hide');
+            load_csvc(); // Reload dữ liệu sau khi thêm thành công
         } else {
-            alert(data.message); // Thông báo lỗi
+            alert(data.message);
         }
     })
     .catch(error => {
@@ -187,8 +216,95 @@ function load_csvc() {
     });
 });
 
+// Hàm chỉnh sửa cơ sở vật chất
+function edit_csvc(csvc_id) {
+    fetch(`http://localhost/QLTV/controller/qlycsvc_controller.php?id=${csvc_id}`) // Sửa URL
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Lỗi HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(csvc => {
+            if (csvc) {
+                document.getElementById('edit_ten_csvc').value = csvc.ten_csvc;
+                document.getElementById('edit_soluong_csvc').value = csvc.soluong_csvc;
+                document.querySelector(`input[name="edit_tinhtrang_csvc"][value="${csvc.tinhtrang_csvc}"]`).checked = true;
+                document.getElementById('edit_csvc_id').value = csvc.csvc_id;
+                $('#editModal').modal('show');
+            } else {
+                alert("Không tìm thấy thông tin cơ sở vật chất!");
+            }
+        })
+        .catch(error => {
+            console.error('Lỗi:', error);
+            alert("Lỗi khi tải thông tin cơ sở vật chất!");
+        });
+}
+document.getElementById('editForm').addEventListener('submit', function (event) {
+    event.preventDefault(); // Ngăn reload trang
+
+    const formData = {
+        csvc_id: document.getElementById('edit_csvc_id').value,
+        ten_csvc: document.getElementById('edit_ten_csvc').value,
+        soluong_csvc: document.getElementById('edit_soluong_csvc').value,
+        tinhtrang_csvc: document.querySelector('input[name="edit_tinhtrang_csvc"]:checked').value
+    };
+
+    fetch('http://localhost/QLTV/controller/qlycsvc_controller.php?action=update', { // Thêm action=update
+        method: 'PUT', // Dùng POST nếu PUT không được hỗ trợ
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Lỗi HTTP: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 200) {
+            $('#editModal').modal('hide');
+            load_csvc(); // Cập nhật lại bảng
+        } else {
+            alert(data.message || "Có lỗi xảy ra!");
+        }
+    })
+    .catch(error => {
+        console.error('Lỗi:', error);
+        alert("Lỗi khi cập nhật thông tin cơ sở vật chất!");
+    });
+});
+
+
+function delete_csvc(csvc_id) {
+    if (confirm("Bạn có chắc chắn muốn xóa cơ sở vật chất này?")) {
+        fetch('http://localhost/QLTV/controller/qlycsvc_controller.php', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',  // Đảm bảo rằng headers là json
+            },
+            body: JSON.stringify({ csvc_id: csvc_id })  // Truyền csvc_id trong body
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 200) {
+                alert("Xóa thành công!");
+                load_csvc();  // Gọi lại hàm để tải lại dữ liệu sau khi xóa
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Lỗi:', error);
+        });
+    }
+}
+
+
 // Gọi hàm load_csvc khi trang được tải
 window.onload = load_csvc;
 </script>
+
 </body>
 </html>
