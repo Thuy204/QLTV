@@ -1,142 +1,162 @@
 <?php
-include('../config/db.php');
-include('../model/qlytacgia_model.php');
+include '../config/db.php';
+include '../model/qlytacgia_model.php';
 
 header('Content-Type: application/json');
 header("Access-Control-Allow-Methods: POST, PUT, DELETE, GET");
 header("Access-Control-Allow-Origin: *");
 
 $request_method = $_SERVER['REQUEST_METHOD'];
-$tacgia = new TacGia($conn);
+$tacGiaModel = new TacGia($conn);
 
 switch ($request_method) {
     case 'GET':
-        echo $tacgia->readTacGiaList();
+        if (isset($_GET['id'])) {
+            get_tacgia_by_id($tacGiaModel); // Lấy tác giả theo ID
+        } else {
+            get_all_tacgia($tacGiaModel); // Lấy tất cả tác giả
+        }
         break;
 
     case 'POST':
-        if (isset($_POST['ten_tacgia']) && isset($_POST['tuoi_tacgia']) && isset($_POST['gioitinh_tacgia']) && isset($_POST['sdt_tacgia'])) {
-            $ten_tacgia = $_POST['ten_tacgia'];
-            $tuoi_tacgia = $_POST['tuoi_tacgia'];
-            $gioitinh_tacgia = $_POST['gioitinh_tacgia'];
-            $sdt_tacgia = $_POST['sdt_tacgia'];
-
-            // Kiểm tra giá trị của gioitinh_tacgia
-            if ($gioitinh_tacgia !== "0" && $gioitinh_tacgia !== "1") {
-                $data = [
-                    'status' => 422,
-                    'message' => 'Dữ liệu giới tính không hợp lệ',
-                ];
-                echo json_encode($data);
-                exit;
-            }
-
-            // Xử lý upload hình ảnh
-            $hinhanh_tacgia = null; // Gán mặc định là null
-            if (isset($_FILES['hinhanh_tacgia']) && $_FILES['hinhanh_tacgia']['error'] == 0) {
-                $target_dir = "../img/tacgia/";
-                $target_file = $target_dir . basename($_FILES["hinhanh_tacgia"]["name"]);
-                if (move_uploaded_file($_FILES["hinhanh_tacgia"]["tmp_name"], $target_file)) {
-                    $hinhanh_tacgia = basename($_FILES["hinhanh_tacgia"]["name"]);
-                } else {
-                    $data = [
-                        'status' => 500,
-                        'message' => 'Lỗi khi tải lên hình ảnh',
-                    ];
-                    echo json_encode($data);
-                    exit;
-                }
-            }
-
-            $inputdata = [
-                'ten_tacgia' => $ten_tacgia,
-                'tuoi_tacgia' => $tuoi_tacgia,
-                'gioitinh_tacgia' => $gioitinh_tacgia,
-                'sdt_tacgia' => $sdt_tacgia,
-                'hinhanh_tacgia' => $hinhanh_tacgia,
-            ];
-
-            echo $tacgia->insertTacGia($inputdata);
-        } else {
+        // Lấy dữ liệu JSON từ Postman
+        $data = json_decode(file_get_contents("php://input"), true);
+    
+        // Kiểm tra xem có đủ dữ liệu đầu vào không
+        if (!isset($data['ten_tacgia']) || !isset($data['gioitinh_tacgia']) || !isset($data['thongtin_tacgia']) || !isset($data['hinhanh_tacgia'])) {
+            http_response_code(422);
             $data = [
                 'status' => 422,
-                'message' => 'Thiếu thông tin',
+                'message' => 'Thiếu dữ liệu đầu vào',
+            ];
+            echo json_encode($data);
+            break;
+        }
+    
+        $ten_tacgia = $data['ten_tacgia'];
+        $gioitinh_tacgia = $data['gioitinh_tacgia'];
+        $thongtin_tacgia = $data['thongtin_tacgia'];
+        $hinhanh_tacgia = $data['hinhanh_tacgia'];
+    
+       
+
+        if ($gioitinh_tacgia !== "0" && $gioitinh_tacgia !== "1") {
+            http_response_code(422);
+            $data = [
+                'status' => 422,
+                'message' => 'Giới tính không hợp lệ',
+            ];
+            echo json_encode($data);
+            break;
+        }
+    
+        // Nếu tất cả dữ liệu hợp lệ, thêm tác giả vào cơ sở dữ liệu
+        if ($tacGiaModel->add_tacgia($ten_tacgia,  $gioitinh_tacgia, $thongtin_tacgia, $hinhanh_tacgia)) {
+            http_response_code(200);
+            $data = [
+                'status' => 200,
+                'message' => 'Tác giả đã được thêm thành công',
+            ];
+            echo json_encode($data);
+        } else {
+            http_response_code(500);
+            $data = [
+                'status' => 500,
+                'message' => 'Thêm tác giả thất bại',
             ];
             echo json_encode($data);
         }
         break;
-
+    
     case 'PUT':
-        parse_str(file_get_contents("php://input"), $_PUT);
-        if (isset($_PUT['tacgia_id']) && isset($_PUT['ten_tacgia']) && isset($_PUT['tuoi_tacgia']) && isset($_PUT['gioitinh_tacgia']) && isset($_PUT['sdt_tacgia'])) {
-            $tacgia_id = $_PUT['tacgia_id'];
-            $ten_tacgia = $_PUT['ten_tacgia'];
-            $tuoi_tacgia = $_PUT['tuoi_tacgia'];
-            $gioitinh_tacgia = $_PUT['gioitinh_tacgia'];
-            $sdt_tacgia = $_PUT['sdt_tacgia'];
+        // Lấy dữ liệu JSON từ Postman
+        $data = json_decode(file_get_contents("php://input"), true);
+    
+        // Kiểm tra xem có đủ dữ liệu đầu vào không
+        if (!isset($data['tacgia_id']) || !isset($data['ten_tacgia'])  || !isset($data['gioitinh_tacgia']) || !isset($data['thongtin_tacgia']) || !isset($data['hinhanh_tacgia'])) {
+            http_response_code(422);
+            $data = [
+                'status' => 422,
+                'message' => 'Thiếu hoặc sai dữ liệu đầu vào',
+            ];
+            echo json_encode($data);
+            break;
+        }
+    
+        $tacgia_id = $data['tacgia_id'];
+        $ten_tacgia = $data['ten_tacgia'];
+        $gioitinh_tacgia = $data['gioitinh_tacgia'];
+        $thongtin_tacgia = $data['thongtin_tacgia'];
+        $hinhanh_tacgia = $data['hinhanh_tacgia'];
+    
+      
 
-            // Kiểm tra giá trị của gioitinh_tacgia
-            if ($gioitinh_tacgia !== "0" && $gioitinh_tacgia !== "1") {
+        if ($gioitinh_tacgia !== "0" && $gioitinh_tacgia !== "1") {
+            http_response_code(422);
+            $data = [
+                'status' => 422,
+                'message' => 'Giới tính không hợp lệ',
+            ];
+            echo json_encode($data);
+            break;
+        }
+    
+        // Nếu tất cả dữ liệu hợp lệ, cập nhật thông tin tác giả trong cơ sở dữ liệu
+        if ($tacGiaModel->update_tacgia($tacgia_id, $ten_tacgia, $gioitinh_tacgia, $thongtin_tacgia, $hinhanh_tacgia)) {
+            http_response_code(200);
+            $data = [
+                'status' => 200,
+                'message' => 'Tác giả đã được cập nhật thành công',
+            ];
+            echo json_encode($data);
+        } else {
+            http_response_code(500);
+            $data = [
+                'status' => 500,
+                'message' => 'Cập nhật tác giả thất bại',
+            ];
+            echo json_encode($data);
+        }
+        break;
+    
+    case 'DELETE':
+        if (isset($_GET['tacgia_id'])) {
+            $id = $_GET['tacgia_id'];
+            
+            // Kiểm tra ID hợp lệ
+            if (!is_numeric($id) || $id <= 0) {
+                http_response_code(400);
                 $data = [
-                    'status' => 422,
-                    'message' => 'Dữ liệu giới tính không hợp lệ',
+                    'status' => 400,
+                    'message' => 'ID tác giả không hợp lệ',
                 ];
                 echo json_encode($data);
                 exit;
             }
-
-            // Xử lý upload hình ảnh
-            if (isset($_FILES['hinhanh_tacgia']) && $_FILES['hinhanh_tacgia']['error'] == 0) {
-                $target_dir = "../img/tacgia/";
-                $target_file = $target_dir . basename($_FILES["hinhanh_tacgia"]["name"]);
-                move_uploaded_file($_FILES["hinhanh_tacgia"]["tmp_name"], $target_file);
-                $hinhanh_tacgia = basename($_FILES["hinhanh_tacgia"]["name"]);
-            } else {
-                $hinhanh_tacgia = null; // Nếu không có ảnh được tải lên
-            }
-
-            $inputdata = [
-                'tacgia_id' => $tacgia_id,
-                'ten_tacgia' => $ten_tacgia,
-                'tuoi_tacgia' => $tuoi_tacgia,
-                'gioitinh_tacgia' => $gioitinh_tacgia,
-                'sdt_tacgia' => $sdt_tacgia,
-                'hinhanh_tacgia' => $hinhanh_tacgia,
-            ];
-
-            echo $tacgia->updateTacGia($inputdata);
+        
+            $deleted_tacgia = $tacGiaModel->delete_tacgia($id); // Xóa tác giả
+            if ($deleted_tacgia) {
+                http_response_code(200);
+                $data = [
+                    'status' => 200,
+                    'message' => 'Xoá tác giả thành công',
+                ];
+                echo json_encode($data);
+                exit;
+            }  
         } else {
+            // Nếu thiếu 'tacgia_id', trả về lỗi
+            http_response_code(400);
             $data = [
-                'status' => 422,
-                'message' => 'Dữ liệu thiếu hoặc không hợp lệ',
+                'status' => 400,
+                'message' => 'Thiếu ID tác giả',
             ];
             echo json_encode($data);
         }
         break;
-
-    case 'DELETE':
-        parse_str(file_get_contents("php://input"), $_DELETE);
-        if (isset($_DELETE['id'])) {
-            $tacgia_id = $_DELETE['id'];
-            $inputdata = [
-                'tacgia_id' => $tacgia_id,
-            ];
-            echo $tacgia->deleteTacGia($inputdata);
-        } else {
-            $data = [
-                'status' => 422,
-                'message' => 'ID không hợp lệ hoặc thiếu',
-            ];
-            echo json_encode($data);
-        }
-        break;
-
+    
     default:
-        $data = [
-            'status' => 405,
-            'message' => 'Phương thức không được phép',
-        ];
-        echo json_encode($data);
+        echo json_encode(["message" => "Method not allowed"]);
         break;
 }
 ?>

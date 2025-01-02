@@ -152,66 +152,83 @@
 </body>
 </html>
 <script>
-    // Hàm load dữ liệu tác giả
-    function loadAuthors() {
-        fetch('http://localhost/QLTV/controller/qlytacgia_controller.php')
-            .then(response => response.json())
-            .then(data => {
-                const tableBody = document.getElementById('tacgia_table');
-                tableBody.innerHTML = ''; // Xóa dữ liệu cũ
-
-                if (data.status === 200) {
-                    data.data.forEach((author, index) => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${index + 1}</td>
-                            <td>${author.tacgia_id}</td>
-                            <td>${author.ten_tacgia}</td>
-                            <td>${author.gioitinh_tacgia === 1 ? 'Nam' : 'Nữ'}</td>
-                            <td>${author.thongtin_tacgia}</td>
-                            <td><img src='../img/tacgia/${author.hinhanh_tacgia}' alt='img' width='50'></td>
-                            <td><button class="btn btn-warning btn-sm">Sửa</button></td>
-                            <td><button class="btn btn-danger btn-sm">Xóa</button></td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
-                } else {
-                    tableBody.innerHTML = '<tr><td colspan="8">Không có dữ liệu</td></tr>';
-                }
-            })
-            .catch(error => console.error('Lỗi khi tải dữ liệu:', error));
-    }
-
-    // Hàm xử lý khi submit form thêm tác giả
-    document.getElementById('addAuthorForm').addEventListener('submit', function(event) {
-        event.preventDefault(); // Ngừng hành động mặc định (reload trang)
-
-        // Tạo đối tượng FormData để gửi dữ liệu
-        const formData = new FormData();
-        formData.append('ten_tacgia', document.getElementById('ten_tacgia').value);
-        formData.append('gioitinh_tacgia', document.querySelector('input[name="gioitinh_tacgia"]:checked').value);
-        formData.append('thongtin_tacgia', document.getElementById('thongtin_tacgia').value);
-        formData.append('hinhanh_tacgia', document.getElementById('hinhanh_tacgia').files[0]);
-
-        // Gửi dữ liệu đến server qua fetch API
-        fetch('http://localhost/QLTV/controller/qlytacgia_controller.php', {
-            method: 'POST',
-            body: formData, // Dữ liệu form
+    // Function to load author data
+function loadAuthors() {
+    fetch('http://localhost/QLTV/controller/qlytacgia_controller.php')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
         })
-        .then(response => response.json())
         .then(data => {
-            if (data.status === 201) {
-                $('#exampleModalCenter').modal('hide');  // Đóng modal sau khi thêm thành công
-                loadAuthors(); // Tải lại danh sách tác giả
+            const tableBody = document.getElementById('tacgia_table');
+            tableBody.innerHTML = ''; // Clear old data
+
+            if (!data.data || !Array.isArray(data.data)) {
+                console.error('Returned data is not an array');
+                tableBody.innerHTML = '<tr><td colspan="8" class="text-center">Data error</td></tr>';
+                return;
+            }
+
+            if (data.data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No data available</td></tr>';
             } else {
-                alert(data.message); // Thông báo lỗi
+                console.log(data);
+                data.data.forEach((author, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${author.tacgia_id}</td>
+                        <td>${author.ten_tacgia}</td>
+                        <td>${author.gioitinh_tacgia === 1 ? 'Nam' : 'Nữ'}</td>
+                        <td>${author.thongtin_tacgia}</td>
+                        <td><img src='../img/tacgia/${author.hinhanh_tacgia}' alt='img' width='50'></td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" onclick="editAuthor(${author.tacgia_id})">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteAuthor(${author.tacgia_id})">Delete</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
             }
         })
         .catch(error => {
-            console.error('Lỗi:', error);
+            console.error('Error:', error);
         });
-    });
+}
 
-    // Gọi hàm loadAuthors khi trang được tải
-    window.onload = loadAuthors;
+// Call loadAuthors when the page is loaded
+window.onload = loadAuthors;
+
+// Form submission handling for adding an author
+document.getElementById('addAuthorForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Prevent default action (reload page)
+
+    // Create FormData object to send data
+    const formData = new FormData();
+    formData.append('ten_tacgia', document.getElementById('ten_tacgia').value);
+    formData.append('gioitinh_tacgia', document.querySelector('input[name="gioitinh_tacgia"]:checked').value);
+    formData.append('thongtin_tacgia', document.getElementById('thongtin_tacgia').value);
+    formData.append('hinhanh_tacgia', document.getElementById('hinhanh_tacgia').files[0]);
+
+    // Send data to the server via fetch API
+    fetch('http://localhost/QLTV/controller/qlytacgia_controller.php', {
+        method: 'POST',
+        body: formData, // Form data
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 201) {
+            $('#exampleModalCenter').modal('hide');  // Close modal after successful addition
+            loadAuthors(); // Reload author list
+        } else {
+            alert(data.message); // Error message
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+});
+
 </script>
