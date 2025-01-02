@@ -123,6 +123,7 @@ function load_docgia() {
             if (!response.ok) {
                 throw new Error('HTTP error! status: ${response.status}');
             }
+
             return response.json();
         })
         .then(data => {
@@ -138,6 +139,7 @@ function load_docgia() {
             if (data.data.length === 0) {
                 tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Không có dữ liệu</td></tr>';
             } else {
+                console.log(response.json());
                 data.data.forEach(docgia => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
