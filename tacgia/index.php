@@ -53,7 +53,6 @@
             </form>
         </div>
 
-        <!-- Bảng hiển thị danh sách tác giả -->
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
@@ -101,7 +100,7 @@
             Thêm mới tác giả
         </button>
 
-        <!-- Modal thêm mới tác giả -->
+        
         <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
@@ -152,3 +151,67 @@
 
 </body>
 </html>
+<script>
+    // Hàm load dữ liệu tác giả
+    function loadAuthors() {
+        fetch('http://localhost/QLTV/controller/qlytacgia_controller.php')
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('tacgia_table');
+                tableBody.innerHTML = ''; // Xóa dữ liệu cũ
+
+                if (data.status === 200) {
+                    data.data.forEach((author, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${author.tacgia_id}</td>
+                            <td>${author.ten_tacgia}</td>
+                            <td>${author.gioitinh_tacgia === 1 ? 'Nam' : 'Nữ'}</td>
+                            <td>${author.thongtin_tacgia}</td>
+                            <td><img src='../img/tacgia/${author.hinhanh_tacgia}' alt='img' width='50'></td>
+                            <td><button class="btn btn-warning btn-sm">Sửa</button></td>
+                            <td><button class="btn btn-danger btn-sm">Xóa</button></td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="8">Không có dữ liệu</td></tr>';
+                }
+            })
+            .catch(error => console.error('Lỗi khi tải dữ liệu:', error));
+    }
+
+    // Hàm xử lý khi submit form thêm tác giả
+    document.getElementById('addAuthorForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Ngừng hành động mặc định (reload trang)
+
+        // Tạo đối tượng FormData để gửi dữ liệu
+        const formData = new FormData();
+        formData.append('ten_tacgia', document.getElementById('ten_tacgia').value);
+        formData.append('gioitinh_tacgia', document.querySelector('input[name="gioitinh_tacgia"]:checked').value);
+        formData.append('thongtin_tacgia', document.getElementById('thongtin_tacgia').value);
+        formData.append('hinhanh_tacgia', document.getElementById('hinhanh_tacgia').files[0]);
+
+        // Gửi dữ liệu đến server qua fetch API
+        fetch('http://localhost/QLTV/controller/qlytacgia_controller.php', {
+            method: 'POST',
+            body: formData, // Dữ liệu form
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 201) {
+                $('#exampleModalCenter').modal('hide');  // Đóng modal sau khi thêm thành công
+                loadAuthors(); // Tải lại danh sách tác giả
+            } else {
+                alert(data.message); // Thông báo lỗi
+            }
+        })
+        .catch(error => {
+            console.error('Lỗi:', error);
+        });
+    });
+
+    // Gọi hàm loadAuthors khi trang được tải
+    window.onload = loadAuthors;
+</script>

@@ -50,5 +50,5 @@ if (isset($_POST['timkiem'])) {
                 </table>";
             }
             ?>
-    <a href="read.php" class="btn btn-warning">Quay lại</a>
+    <a href="index.php" class="btn btn-warning">Quay lại</a>
 </div>

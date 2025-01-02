@@ -40,7 +40,7 @@ if (isset($_POST['sua_tacgia'])) {
     } else {
         echo "<script type='text/javascript'>
                 alert('Cập nhật dữ liệu thành công!');
-                window.location.href='read.php';
+                window.location.href='index.php';
               </script>";
     }
 }
